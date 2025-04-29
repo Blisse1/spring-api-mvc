@@ -1,14 +1,15 @@
 package com.codewithmosh.store.controllers;
 
+import com.codewithmosh.store.dtos.UserDto;
 import com.codewithmosh.store.entities.User;
+import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 
 @RestController// to return data as json
@@ -16,11 +17,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 public class UserController {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     // @RequestMapping ("/users") // by default uses get method
     @GetMapping
-    public Iterable<User> getAllUsers(){
-        return userRepository.findAll();
+    public Iterable<UserDto> getAllUsers(
+            @RequestParam(required = false, defaultValue = "") String sort
+    ){
+        if(!Set.of("name", "email").contains(sort))
+            sort = "name";
+        return userRepository.findAll(Sort.by(sort))
+                .stream()
+                // .map(user -> new UserDto(user.getId(), user.getName(), user.getEmail()))
+                .map(userMapper::toDto)
+                .toList();
     }
 
     @GetMapping ("/{id}")
@@ -29,12 +39,13 @@ public class UserController {
 //    }
 
     // response entity to do status code
-    public ResponseEntity<User> getUser(@PathVariable Long id){
+    public ResponseEntity<UserDto> getUser(@PathVariable Long id){
         var user = userRepository.findById(id).orElse(null);
         if(user == null){
             //return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(user);
+        //var userDto = new UserDto(user.getId(), user.getName(), user.getEmail());
+        return ResponseEntity.ok(userMapper.toDto(user));
     }
 }

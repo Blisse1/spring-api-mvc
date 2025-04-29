@@ -5,6 +5,11 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
+// transfer data that we want
+// others to publicly see
+// not password or sensible data
 public class Message {
-    private String text;
+    private Long id;
+    private String name;
+    private String email;
 }
